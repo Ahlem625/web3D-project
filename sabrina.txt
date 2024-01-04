@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>THREEJS EXAMPLE</title>
+    <style>
+        html, body { margin: 0; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/DRACOLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <script type="module">
+        let scene, camera, renderer, controls;
+        let chairModel;
+        let colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00]; // Tableau de couleurs
+        let colorIndex = 0; // Index de couleur actuel
+
+        const init = () => {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 2.5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff);
+            scene.add(ambientLight);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.addEventListener('change', () => { renderer.render(scene, camera); });
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            window.addEventListener('resize', () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+            });
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('models/chair2.glb', function(gltf) {
+                chairModel = gltf.scene;
+                chairModel.position.set(0, 0, 0);
+                scene.add(chairModel);
+
+                animate(); // Commencer l'animation après que le modèle soit chargé
+            }, undefined, function(error) {
+                console.error(error);
+            });
+        };
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            if (chairModel) {
+                chairModel.rotation.y += 0.01; // Rotation continue de la chaise
+            }
+            renderer.render(scene, camera);
+        };
+
+        const onMouseDown = (event) => {
+            if (chairModel) {
+                const raycaster = new THREE.Raycaster();
+                const mouse = new THREE.Vector2();
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(chairModel.children, true);
+
+                if (intersects.length > 0) {
+                    const clickedObject = intersects[0].object;
+                    clickedObject.material.color.set(colors[colorIndex]); // Changer la couleur en fonction de l'index actuel
+                    colorIndex = (colorIndex + 1) % colors.length; // Passer à la couleur suivante dans le tableau
+                    renderer.render(scene, camera); // Rendu après le changement de couleur
+                }
+            }
+        };
+
+        init();
+        window.addEventListener('mousedown', onMouseDown, false);
+    </script>
+</body>
+</html>
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>THREEJS EXAMPLE</title>
+    <style>
+        html, body { margin: 0; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/DRACOLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <script type="module">
+        let scene, camera, renderer, controls;
+        let chairModel;
+        let colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00]; // Tableau de couleurs
+        let colorIndex = 0; // Index de couleur actuel
+        let selectedObject = null;
+
+
+        const init = () => {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 2.5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff);
+            scene.add(ambientLight);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.addEventListener('change', () => { renderer.render(scene, camera); });
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            window.addEventListener('resize', () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+            });
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('three.js/donut_v1.glb', function(gltf) {
+                chairModel = gltf.scene;
+                chairModel.position.set(0, 0, 0);
+                scene.add(chairModel);
+
+            }, undefined, function(error) {
+                console.error(error);
+            });
+        };
+        // Add this function to handle object selection and scaling
+// Add this function to handle object selection and scaling
+// Function to handle object selection and movement
+const onDocumentMouseDown = (event) => {
+    event.preventDefault();
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    // Calculate mouse position in normalized device coordinates
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Set the raycaster's properties
+    raycaster.setFromCamera(mouse, camera);
+
+    // Find intersected objects
+    const intersects = raycaster.intersectObjects(scene.children, true);
+
+    if (intersects.length > 0) {
+        // Assuming the first object intersected is the one we want to manipulate
+        selectedObject = intersects[0].object;
+
+        // Add movement controls
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('mouseup', onDocumentMouseUp, false);
+    }
+};
+
+// Function to handle object movement based on mouse drag
+const onDocumentMouseMove = (event) => {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects([selectedObject]);
+
+    if (intersects.length > 0) {
+        const intersect = intersects[0];
+        const newPosition = intersect.point;
+
+        // Update the position of the selected object
+        selectedObject.position.copy(newPosition);
+    }
+};
+init();
+
+// Function to handle the end of object movement
+const onDocumentMouseUp = () => {
+    document.removeEventListener('mousemove', onDocumentMouseMove, false);
+    document.removeEventListener('mouseup', onDocumentMouseUp, false);
+};
+
+// Add mouse down event listener to enable object selection
+document.addEventListener('mousedown', onDocumentMouseDown, false);
+
+
+
+
+     
+
+
+    </script>
+</body>
+</html> -->
